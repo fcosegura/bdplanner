@@ -186,40 +186,56 @@
         /* Input Area */
         .input-group {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin-top: 20px;
-            background: rgba(0, 0, 0, 0.03);
-            padding: 8px;
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px;
+            border-radius: 18px;
             border: 1px solid var(--glass-border);
+            align-items: center;
         }
 
-        @media (prefers-color-scheme: dark) {
-            .input-group { background: rgba(255, 255, 255, 0.03); }
+        @media (prefers-color-scheme: light) {
+            .input-group { background: rgba(0, 0, 0, 0.03); }
         }
 
         input[type="text"], input[type="date"] {
             flex: 1;
             background: transparent;
             border: none;
-            padding: 10px 12px;
+            padding: 12px 14px;
             color: var(--text-primary);
             font-family: inherit;
             font-size: 17px;
             outline: none;
+            min-width: 0; /* Fix for flex items */
+        }
+
+        /* Special handling for date input color scheme */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.5);
+            cursor: pointer;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            input[type="date"]::-webkit-calendar-picker-indicator {
+                filter: invert(1);
+            }
         }
 
         .add-btn {
             background: var(--accent-blue);
             color: white;
             border: none;
-            padding: 0 24px;
-            height: 44px;
+            padding: 0 20px;
+            height: 40px;
             border-radius: 14px;
             font-weight: 600;
+            font-size: 15px;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
-            transition: transform 0.2s ease, opacity 0.2s ease;
+            transition: all 0.2s ease;
+            white-space: nowrap;
         }
 
         .add-btn:active {
@@ -230,7 +246,7 @@
         /* Modern Floating Bottom Nav */
         .bottom-nav-wrapper {
             position: fixed;
-            bottom: calc(20px + var(--safe-area-bottom));
+            bottom: calc(25px + var(--safe-area-bottom));
             left: 0;
             right: 0;
             display: flex;
@@ -241,18 +257,18 @@
 
         .bottom-nav {
             width: 100%;
-            max-width: 400px;
-            height: 72px;
+            max-width: 380px;
+            height: 76px;
             background: var(--card-bg);
             backdrop-filter: blur(40px) saturate(200%);
             -webkit-backdrop-filter: blur(40px) saturate(200%);
             border: 1px solid var(--glass-border);
-            border-radius: 36px;
+            border-radius: 38px;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 0 10px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            padding: 0 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
             animation: slideUpNav 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -266,7 +282,8 @@
             text-decoration: none;
             flex: 1;
             height: 100%;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
+            padding-top: 4px;
         }
 
         .nav-item.active {
@@ -274,37 +291,39 @@
         }
 
         .nav-icon-svg {
-            width: 26px;
-            height: 26px;
-            margin-bottom: 2px;
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
             stroke: currentColor;
-            stroke-width: 2;
+            stroke-width: 2.2;
             fill: none;
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .nav-item.active .nav-icon-svg {
-            transform: translateY(-2px) scale(1.1);
+            transform: translateY(-2px);
         }
 
         .nav-label {
             font-size: 10px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
             opacity: 0.8;
+            margin-bottom: 10px;
         }
 
         .nav-indicator {
             position: absolute;
-            bottom: 8px;
-            width: 4px;
-            height: 4px;
+            bottom: 12px;
+            width: 5px;
+            height: 5px;
             background: var(--accent-blue);
             border-radius: 50%;
             opacity: 0;
             transform: scale(0);
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 10px var(--accent-blue);
         }
 
         .nav-item.active .nav-indicator {
