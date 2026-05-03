@@ -489,24 +489,23 @@
         .gift-info {
             display: flex;
             flex-direction: column;
+            flex: 1;
         }
 
-        .gift-name {
-            font-weight: 500;
-            font-size: 17px;
+        .gift-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
 
-        .gift-price {
-            font-size: 14px;
+        .edit-btn {
+            background: rgba(0, 122, 255, 0.08);
             color: var(--accent-blue);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 12px;
             font-weight: 600;
-            margin-top: 2px;
-        }
-
-        .gift-link-icon {
-            margin-left: 10px;
-            color: var(--text-secondary);
-            opacity: 0.6;
+            font-size: 13px;
         }
     </style>
 </head>
@@ -584,7 +583,7 @@
     <div id="gift-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Detalles del Regalo</h2>
+                <h2 class="modal-title" id="modal-title">Detalles del Regalo</h2>
                 <button class="close-modal" onclick="closeGiftModal()">✕</button>
             </div>
             <div class="modal-body">
@@ -596,7 +595,7 @@
             </div>
             <div class="modal-footer">
                 <button class="secondary-btn" onclick="closeGiftModal()">Cancelar</button>
-                <button class="primary-btn" onclick="saveGift()">Guardar Regalo</button>
+                <button class="primary-btn" id="modal-save-btn" onclick="saveGift()">Guardar Regalo</button>
             </div>
         </div>
     </div>
@@ -637,6 +636,7 @@
         // State
         let birthDate = localStorage.getItem('bd_planner_birthdate');
         let gifts = JSON.parse(localStorage.getItem('bd_planner_gifts') || '[]');
+        let editingIndex = -1;
 
         // Migration: convert string gifts to objects
         gifts = gifts.map(g => typeof g === 'string' ? { name: g, price: '', url: '' } : g);
@@ -678,17 +678,33 @@
         }
 
         // Modal Logic
-        function openGiftModal() {
-            const initialName = document.getElementById('gift-input').value.trim();
-            document.getElementById('modal-gift-name').value = initialName;
-            document.getElementById('modal-gift-price').value = '';
-            document.getElementById('modal-gift-url').value = '';
+        function openGiftModal(index = -1) {
+            editingIndex = index;
+            const modalTitle = document.getElementById('modal-title');
+            const saveBtn = document.getElementById('modal-save-btn');
+            
+            if (editingIndex > -1) {
+                const gift = gifts[editingIndex];
+                document.getElementById('modal-gift-name').value = gift.name;
+                document.getElementById('modal-gift-price').value = gift.price;
+                document.getElementById('modal-gift-url').value = gift.url;
+                modalTitle.innerText = 'Editar Regalo';
+                saveBtn.innerText = 'Actualizar Regalo';
+            } else {
+                const initialName = document.getElementById('gift-input').value.trim();
+                document.getElementById('modal-gift-name').value = initialName;
+                document.getElementById('modal-gift-price').value = '';
+                document.getElementById('modal-gift-url').value = '';
+                modalTitle.innerText = 'Detalles del Regalo';
+                saveBtn.innerText = 'Guardar Regalo';
+            }
             
             document.getElementById('gift-modal').classList.add('active');
         }
 
         function closeGiftModal() {
             document.getElementById('gift-modal').classList.remove('active');
+            editingIndex = -1;
         }
 
         function saveGift() {
@@ -697,7 +713,12 @@
             const url = document.getElementById('modal-gift-url').value.trim();
 
             if (name) {
-                gifts.push({ name, price, url });
+                if (editingIndex > -1) {
+                    gifts[editingIndex] = { name, price, url };
+                } else {
+                    gifts.push({ name, price, url });
+                }
+                
                 localStorage.setItem('bd_planner_gifts', JSON.stringify(gifts));
                 document.getElementById('gift-input').value = '';
                 renderGifts();
@@ -780,7 +801,10 @@
                         </div>
                         ${gift.price ? `<span class="gift-price">${gift.price}</span>` : ''}
                     </div>
-                    <button class="delete-btn" onclick="removeGift(${index})">Eliminar</button>
+                    <div class="gift-actions">
+                        <button class="edit-btn" onclick="openGiftModal(${index})">Editar</button>
+                        <button class="delete-btn" onclick="removeGift(${index})">Eliminar</button>
+                    </div>
                 `;
                 list.appendChild(li);
             });
