@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Personal Planner</title>
+    <title>Birthday Planner</title>
     
     <!-- iOS PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="MyPlanner">
+    <meta name="apple-mobile-web-app-title" content="BD Planner">
     <link rel="apple-touch-icon" href="icon.png">
     
     <!-- Google Fonts -->
@@ -19,21 +19,24 @@
     <style>
         :root {
             --bg-color: #f2f2f7;
-            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-bg: rgba(255, 255, 255, 0.85);
             --text-primary: #000000;
             --text-secondary: #8e8e93;
-            --accent-color: #007aff;
+            --accent-color: #ff3b30; /* Red for celebration */
+            --accent-blue: #007aff;
             --glass-border: rgba(255, 255, 255, 0.3);
             --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-color: #000000;
-                --card-bg: rgba(28, 28, 30, 0.8);
+                --card-bg: rgba(28, 28, 30, 0.85);
                 --text-primary: #ffffff;
                 --text-secondary: #8e8e93;
-                --accent-color: #0a84ff;
+                --accent-color: #ff453a;
+                --accent-blue: #0a84ff;
                 --glass-border: rgba(255, 255, 255, 0.1);
             }
         }
@@ -48,15 +51,17 @@
             background-color: var(--bg-color);
             color: var(--text-primary);
             margin: 0;
-            padding: calc(var(--safe-area-top) + 20px) 20px 20px 20px;
+            padding: calc(var(--safe-area-top) + 20px) 20px calc(var(--safe-area-bottom) + 80px) 20px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             transition: background-color 0.3s ease;
+            overflow-x: hidden;
         }
 
         header {
             margin-bottom: 30px;
+            animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         h1 {
@@ -72,137 +77,407 @@
             margin-top: 5px;
         }
 
+        /* View Containers */
+        .view {
+            display: none;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Cards */
         .card {
             background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
+            border-radius: 24px;
+            padding: 24px;
             margin-bottom: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease;
         }
 
-        .card:active {
-            transform: scale(0.98);
+        /* Countdown Grid */
+        .countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
         }
 
-        textarea {
-            width: 100%;
-            height: 250px;
-            background: transparent;
-            border: none;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 18px;
-            line-height: 1.5;
-            resize: none;
-            outline: none;
+        .time-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .time-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .time-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* Gift List */
+        .list-container {
+            list-style: none;
             padding: 0;
+            margin: 0;
         }
 
-        .status-bar {
+        .list-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 15px;
-            font-size: 13px;
-            color: var(--text-secondary);
+            padding: 16px 0;
+            border-bottom: 1px solid var(--glass-border);
+            animation: slideInRight 0.4s ease-out backwards;
         }
 
-        .badge {
-            background: var(--accent-color);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 10px;
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item span {
+            font-size: 18px;
+        }
+
+        .delete-btn {
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--accent-color);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 12px;
             font-weight: 600;
-            font-size: 11px;
-            text-transform: uppercase;
+            font-size: 14px;
         }
 
-        /* Micro-animations */
+        /* Input Area */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        input[type="text"], input[type="date"] {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 16px;
+            outline: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            input[type="text"], input[type="date"] {
+                background: rgba(255, 255, 255, 0.05);
+            }
+        }
+
+        .add-btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(65px + var(--safe-area-bottom));
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: var(--safe-area-bottom);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: var(--accent-blue);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .card {
-            animation: fadeIn 0.6s ease-out forwards;
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Custom scrollbar for webkit */
-        ::-webkit-scrollbar {
-            width: 6px;
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
-        ::-webkit-scrollbar-track {
-            background: transparent;
+
+        /* Progress Circle (Simplified) */
+        .age-display {
+            text-align: center;
+            margin-bottom: 20px;
         }
-        ::-webkit-scrollbar-thumb {
-            background: var(--text-secondary);
-            border-radius: 10px;
+
+        .age-number {
+            font-size: 48px;
+            font-weight: 600;
+            color: var(--accent-color);
+            display: block;
+        }
+
+        .age-text {
+            font-size: 15px;
+            color: var(--text-secondary);
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Mi Planificador</h1>
-        <div class="subtitle">Persistencia local en iPhone</div>
+    <header id="app-header">
+        <h1>Cuenta Atrás</h1>
+        <div class="subtitle" id="header-subtitle">Días para el gran momento</div>
     </header>
 
     <main>
-        <div class="card">
-            <textarea id="editor" placeholder="Escribe tus ideas aquí..."></textarea>
-            <div class="status-bar">
-                <span id="save-status">Sincronizado</span>
-                <span class="badge">Local Storage</span>
+        <!-- VIEW: COUNTDOWN -->
+        <div id="view-countdown" class="view active">
+            <div class="card">
+                <div class="age-display">
+                    <span class="age-text">Cumplirás</span>
+                    <span id="next-age" class="age-number">--</span>
+                    <span class="age-text">años</span>
+                </div>
+                <div class="countdown-grid">
+                    <div class="time-unit">
+                        <span id="days" class="time-value">0</span>
+                        <span class="time-label">Días</span>
+                    </div>
+                    <div class="time-unit">
+                        <span id="weeks" class="time-value">0</span>
+                        <span class="time-label">Semanas</span>
+                    </div>
+                    <div class="time-unit">
+                        <span id="hours" class="time-value">0</span>
+                        <span class="time-label">Horas</span>
+                    </div>
+                    <div class="time-unit">
+                        <span id="minutes" class="time-value">0</span>
+                        <span class="time-label">Minutos</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" style="padding: 15px; text-align: center;">
+                <p style="margin: 0; font-size: 14px; color: var(--text-secondary);" id="countdown-footer">
+                    Calculando tiempo restante...
+                </p>
             </div>
         </div>
-        
-        <div class="card" style="padding: 15px;">
-            <p style="margin: 0; font-size: 15px; color: var(--text-secondary);">
-                💡 Esta app no envía datos a ningún servidor. Todo lo que escribes se guarda exclusivamente en este dispositivo.
-            </p>
+
+        <!-- VIEW: GIFTS -->
+        <div id="view-gifts" class="view">
+            <div class="card">
+                <h3 style="margin-top: 0;">Lista de Deseos</h3>
+                <ul id="gift-list" class="list-container">
+                    <!-- Items injected here -->
+                </ul>
+                <div class="input-group">
+                    <input type="text" id="gift-input" placeholder="¿Qué te gustaría?">
+                    <button class="add-btn" onclick="addGift()">Añadir</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: SETTINGS -->
+        <div id="view-settings" class="view">
+            <div class="card">
+                <h3 style="margin-top: 0;">Configuración</h3>
+                <p style="color: var(--text-secondary); font-size: 15px;">Introduce tu fecha de nacimiento para calcular la cuenta atrás.</p>
+                <div class="input-group">
+                    <input type="date" id="birth-date-input">
+                    <button class="add-btn" onclick="saveBirthDate()">Guardar</button>
+                </div>
+            </div>
         </div>
     </main>
 
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" onclick="switchView('countdown', this)">
+            <span class="nav-icon">⏳</span>
+            <span>Cuenta Atrás</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('gifts', this)">
+            <span class="nav-icon">🎁</span>
+            <span>Regalos</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('settings', this)">
+            <span class="nav-icon">⚙️</span>
+            <span>Ajustes</span>
+        </a>
+    </nav>
+
     <script>
-        const editor = document.getElementById('editor');
-        const saveStatus = document.getElementById('save-status');
+        // State
+        let birthDate = localStorage.getItem('bd_planner_birthdate');
+        let gifts = JSON.parse(localStorage.getItem('bd_planner_gifts') || '[]');
 
-        // Load data on startup
-        window.addEventListener('load', () => {
-            const savedContent = localStorage.getItem('pwa_planner_content');
-            if (savedContent) {
-                editor.value = savedContent;
-            }
-        });
-
-        // Auto-save logic
-        let timeout = null;
-        editor.addEventListener('input', () => {
-            saveStatus.innerText = 'Escribiendo...';
+        // Navigation
+        function switchView(viewId, el) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
             
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                localStorage.setItem('pwa_planner_content', editor.value);
-                saveStatus.innerText = 'Guardado ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                
-                // Haptic feedback simulation if supported (mostly for Android, but good practice)
-                if (window.navigator.vibrate) {
-                    window.navigator.vibrate(10);
-                }
-            }, 800);
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            el.classList.add('active');
+
+            const headerTitle = document.querySelector('header h1');
+            const headerSubtitle = document.getElementById('header-subtitle');
+
+            if (viewId === 'countdown') {
+                headerTitle.innerText = 'Cuenta Atrás';
+                headerSubtitle.innerText = 'Días para el gran momento';
+            } else if (viewId === 'gifts') {
+                headerTitle.innerText = 'Auto-Regalos';
+                headerSubtitle.innerText = 'Ideas para consentirte';
+                renderGifts();
+            } else {
+                headerTitle.innerText = 'Ajustes';
+                headerSubtitle.innerText = 'Configura tu perfil';
+            }
+        }
+
+        // Birthday Logic
+        function saveBirthDate() {
+            const input = document.getElementById('birth-date-input').value;
+            if (input) {
+                localStorage.setItem('bd_planner_birthdate', input);
+                birthDate = input;
+                updateCountdown();
+                switchView('countdown', document.querySelector('.nav-item'));
+            }
+        }
+
+        function updateCountdown() {
+            if (!birthDate) {
+                document.getElementById('countdown-footer').innerText = 'Por favor, configura tu fecha en Ajustes.';
+                return;
+            }
+
+            const now = new Date();
+            const birth = new Date(birthDate);
+            
+            // Calculate next birthday
+            let nextBD = new Date(now.getFullYear(), birth.getMonth(), birth.getDate());
+            if (nextBD < now) {
+                nextBD.setFullYear(now.getFullYear() + 1);
+            }
+
+            // Calculate age
+            const age = nextBD.getFullYear() - birth.getFullYear();
+            document.getElementById('next-age').innerText = age;
+
+            const diff = nextBD - now;
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const weeks = Math.floor(days / 7);
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            document.getElementById('days').innerText = days;
+            document.getElementById('weeks').innerText = weeks;
+            document.getElementById('hours').innerText = hours;
+            document.getElementById('minutes').innerText = minutes;
+
+            document.getElementById('countdown-footer').innerText = `¡Tu próximo cumple es el ${nextBD.toLocaleDateString()}!`;
+        }
+
+        // Gifts Logic
+        function renderGifts() {
+            const list = document.getElementById('gift-list');
+            list.innerHTML = '';
+            gifts.forEach((gift, index) => {
+                const li = document.createElement('li');
+                li.className = 'list-item';
+                li.style.animationDelay = (index * 0.1) + 's';
+                li.innerHTML = `
+                    <span>${gift}</span>
+                    <button class="delete-btn" onclick="removeGift(${index})">Eliminar</button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function addGift() {
+            const input = document.getElementById('gift-input');
+            if (input.value.trim()) {
+                gifts.push(input.value.trim());
+                localStorage.setItem('bd_planner_gifts', JSON.stringify(gifts));
+                input.value = '';
+                renderGifts();
+            }
+        }
+
+        function removeGift(index) {
+            gifts.splice(index, 1);
+            localStorage.setItem('bd_planner_gifts', JSON.stringify(gifts));
+            renderGifts();
+        }
+
+        // Initialization
+        window.addEventListener('load', () => {
+            if (birthDate) {
+                document.getElementById('birth-date-input').value = birthDate;
+                updateCountdown();
+                setInterval(updateCountdown, 60000); // Update every minute
+            } else {
+                switchView('settings', document.querySelectorAll('.nav-item')[2]);
+            }
+            renderGifts();
         });
 
         // Register Service Worker
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW Registered'))
-                    .catch(err => console.log('SW Error: ', err));
-            });
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error: ', err));
         }
     </script>
 </body>
