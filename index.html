@@ -507,6 +507,29 @@
             font-weight: 600;
             font-size: 13px;
         }
+
+        .fav-btn {
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin-right: 12px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s ease;
+        }
+
+        .fav-btn.active {
+            color: #ff2d55;
+            animation: heartPulse 0.4s ease-out;
+        }
+
+        @keyframes heartPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -638,8 +661,12 @@
         let gifts = JSON.parse(localStorage.getItem('bd_planner_gifts') || '[]');
         let editingIndex = -1;
 
-        // Migration: convert string gifts to objects
-        gifts = gifts.map(g => typeof g === 'string' ? { name: g, price: '', url: '' } : g);
+        // Migration: convert gifts to latest structure
+        gifts = gifts.map(g => {
+            if (typeof g === 'string') return { name: g, price: '', url: '', isFavorite: false };
+            if (!g.hasOwnProperty('isFavorite')) g.isFavorite = false;
+            return g;
+        });
 
         // Navigation
         function switchView(viewId, el) {
@@ -675,6 +702,14 @@
             }
 
             if (window.navigator.vibrate) window.navigator.vibrate(5);
+        }
+
+        // Favorite Logic
+        function toggleFavorite(index) {
+            gifts[index].isFavorite = !gifts[index].isFavorite;
+            localStorage.setItem('bd_planner_gifts', JSON.stringify(gifts));
+            renderGifts();
+            if (window.navigator.vibrate) window.navigator.vibrate(10);
         }
 
         // Modal Logic
@@ -714,9 +749,9 @@
 
             if (name) {
                 if (editingIndex > -1) {
-                    gifts[editingIndex] = { name, price, url };
+                    gifts[editingIndex] = { ...gifts[editingIndex], name, price, url };
                 } else {
-                    gifts.push({ name, price, url });
+                    gifts.push({ name, price, url, isFavorite: false });
                 }
                 
                 localStorage.setItem('bd_planner_gifts', JSON.stringify(gifts));
@@ -782,10 +817,16 @@
         function renderGifts() {
             const list = document.getElementById('gift-list');
             list.innerHTML = '';
-            gifts.forEach((gift, index) => {
+            
+            // Optional: sort favorites first
+            const sortedGifts = [...gifts].map((g, i) => ({...g, originalIndex: i}))
+                                .sort((a, b) => b.isFavorite - a.isFavorite);
+
+            sortedGifts.forEach((gift, sortedIndex) => {
+                const index = gift.originalIndex;
                 const li = document.createElement('li');
                 li.className = 'list-item';
-                li.style.animationDelay = (index * 0.05) + 's';
+                li.style.animationDelay = (sortedIndex * 0.05) + 's';
                 
                 let linkHtml = gift.url ? `
                     <a href="${gift.url.startsWith('http') ? gift.url : 'https://' + gift.url}" target="_blank" class="gift-link-icon">
@@ -794,6 +835,11 @@
                 ` : '';
 
                 li.innerHTML = `
+                    <button class="fav-btn ${gift.isFavorite ? 'active' : ''}" onclick="toggleFavorite(${index})">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="${gift.isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                    </button>
                     <div class="gift-info">
                         <div style="display: flex; align-items: center;">
                             <span class="gift-name">${gift.name}</span>
@@ -811,15 +857,12 @@
         }
 
         function removeGift(index) {
-            const items = document.querySelectorAll('.list-item');
-            items[index].style.transform = "translateX(100px)";
-            items[index].style.opacity = "0";
-            
-            setTimeout(() => {
-                gifts.splice(index, 1);
-                localStorage.setItem('bd_planner_gifts', JSON.stringify(gifts));
-                renderGifts();
-            }, 300);
+            // Find the list item visually
+            const listItems = document.querySelectorAll('.list-item');
+            // This is slightly tricky with sorting, but we can match by content or just re-render
+            gifts.splice(index, 1);
+            localStorage.setItem('bd_planner_gifts', JSON.stringify(gifts));
+            renderGifts();
         }
 
         // Initialization
