@@ -607,6 +607,16 @@
                     <button class="add-btn" onclick="saveBirthDate()">Guardar</button>
                 </div>
             </div>
+
+            <div class="card" style="margin-top: 30px;">
+                <h3 style="margin-top: 0; font-size: 20px; letter-spacing: -0.5px;">Datos y Backup</h3>
+                <p style="color: var(--text-secondary); font-size: 15px; line-height: 1.4;">Exporta tus datos para guardarlos o impórtalos para restaurar tu cuenta atrás y regalos.</p>
+                <div style="display: flex; gap: 12px; margin-top: 20px;">
+                    <button class="secondary-btn" style="flex: 1; padding: 12px;" onclick="exportData()">Exportar JSON</button>
+                    <button class="secondary-btn" style="flex: 1; padding: 12px;" onclick="document.getElementById('import-input').click()">Importar JSON</button>
+                </div>
+                <input type="file" id="import-input" style="display: none;" accept=".json" onchange="importData(event)">
+            </div>
         </div>
     </main>
 
@@ -718,6 +728,56 @@
             localStorage.setItem('bd_planner_gifts', JSON.stringify(gifts));
             renderGifts();
             if (window.navigator.vibrate) window.navigator.vibrate(10);
+        }
+
+        // Backup Logic
+        function exportData() {
+            const data = {
+                birthDate: localStorage.getItem('bd_planner_birthdate'),
+                gifts: JSON.parse(localStorage.getItem('bd_planner_gifts') || '[]')
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bd_planner_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.birthDate) {
+                        localStorage.setItem('bd_planner_birthdate', data.birthDate);
+                        birthDate = data.birthDate;
+                        document.getElementById('birth-date-input').value = birthDate;
+                    }
+                    if (data.gifts) {
+                        localStorage.setItem('bd_planner_gifts', JSON.stringify(data.gifts));
+                        gifts = data.gifts;
+                        // Migration: convert gifts to latest structure
+                        gifts = gifts.map(g => {
+                            if (typeof g === 'string') return { name: g, price: '', url: '', isFavorite: false };
+                            if (!g.hasOwnProperty('isFavorite')) g.isFavorite = false;
+                            return g;
+                        });
+                        renderGifts();
+                    }
+                    updateCountdown();
+                    alert('¡Datos importados con éxito! 🎉');
+                } catch (err) {
+                    alert('Error al importar el archivo. Asegúrate de que sea un JSON válido.');
+                }
+            };
+            reader.readAsText(file);
         }
 
         // Modal Logic
