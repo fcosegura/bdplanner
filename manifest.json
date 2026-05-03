@@ -1,11 +1,11 @@
 {
-  "name": "Personal Planner iOS",
-  "short_name": "Planner",
+  "name": "Birthday Countdown & Gifts",
+  "short_name": "BD Planner",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#f2f2f7",
+  "background_color": "#000000",
   "theme_color": "#007aff",
-  "description": "Una app minimalista y privada para organizar tus ideas.",
+  "description": "Cuenta atrás premium para tu cumpleaños y lista de auto-regalos.",
   "icons": [
     {
       "src": "icon.png",
