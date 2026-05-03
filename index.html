@@ -620,7 +620,7 @@
             <div class="modal-body">
                 <div class="input-group">
                     <input type="text" id="modal-gift-name" class="field" placeholder="Nombre del regalo">
-                    <input type="text" id="modal-gift-price" class="field" placeholder="Precio (ej: 50€)">
+                    <input type="number" id="modal-gift-price" class="field" placeholder="Precio (ej: 50)" inputmode="decimal">
                     <input type="text" id="modal-gift-url" class="field" placeholder="Enlace del producto (URL)">
                 </div>
             </div>
@@ -853,7 +853,7 @@
                             <span class="gift-name">${gift.name}</span>
                             ${linkHtml}
                         </div>
-                        ${gift.price ? `<span class="gift-price">${gift.price}</span>` : ''}
+                        ${gift.price ? `<span class="gift-price">${gift.price} €</span>` : ''}
                     </div>
                     <div class="gift-actions">
                         <button class="edit-btn" onclick="openGiftModal(${index})">Editar</button>
